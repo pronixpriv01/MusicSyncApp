@@ -10,6 +10,7 @@ public class AppConfig {
     private String startParameter;
     private int maxConnections;
     private boolean enableLogging;
+    private boolean isMaster;
 
     /**
      * Konstruktor der AppConfig-Klasse.
@@ -19,10 +20,11 @@ public class AppConfig {
         this.startParameter = "default";
         this.maxConnections = 10;
         this.enableLogging = true;
+        this.isMaster = false;
     }
 
     /**
-     * Gibt den akutellen Startparameter zurück.
+     * Gibt den aktuellen Startparameter zurück.
      *
      * @return Der aktuelle Startparameter als String.
      */
@@ -73,5 +75,23 @@ public class AppConfig {
      */
     public void setEnableLogging(boolean enableLogging) {
         this.enableLogging = enableLogging;
+    }
+
+    public boolean isMaster() {
+        return isMaster;
+    }
+
+    public void setMaster(boolean master) {
+        isMaster = master;
+    }
+
+    @Override
+    public String toString() {
+        return "AppConfig{" +
+                "startParameter='" + startParameter + '\'' +
+                ", maxConnections=" + maxConnections +
+                ", enableLogging=" + enableLogging +
+                ", isMaster=" + isMaster +
+                '}';
     }
 }

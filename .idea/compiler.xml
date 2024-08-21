@@ -9,8 +9,5 @@
         <module name="MusicSyncApp" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="MusicSyncApp" target="21" />
-    </bytecodeTargetLevel>
   </component>
 </project>
