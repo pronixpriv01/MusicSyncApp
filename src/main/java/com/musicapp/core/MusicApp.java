@@ -41,12 +41,12 @@ public class MusicApp {
         logger.log(Level.INFO, "MusicApp wird gestartet mit Konfiguration: " + StringUtil.toString(config));
         try {
             if (config.isMaster()) {
-                master = new Master(config);
-                master.start();
+                master = new Master(config, config.getPort());
+                master.startServer();
+                master.sendCommandToClients("start");
             } else {
-                client = new Client(config);
+                client = new Client(config, config.getServerUri());
                 client.connectToMaster();
-                client.start();
             }
             System.out.println("MusicApp gestartet.");
         } catch (Exception e) {
@@ -63,11 +63,10 @@ public class MusicApp {
         logger.log(Level.INFO, "MusicApp wird gestoppt.");
         try {
             if (master != null) {
-                master.stop();
+                master.stopServer();
             }
             if (client != null) {
-                client.disconnect();
-                client.stop();
+                client.disconnectFromMaster();
             }
             System.out.println("MusicApp gestoppt.");
         } catch (Exception e) {

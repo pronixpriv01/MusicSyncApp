@@ -11,6 +11,7 @@ public class AppConfig {
     private int maxConnections;
     private boolean enableLogging;
     private boolean isMaster;
+    private String serverUri = "ws://localhost:8887";
 
     /**
      * Konstruktor der AppConfig-Klasse.
@@ -85,6 +86,14 @@ public class AppConfig {
         isMaster = master;
     }
 
+    public String getServerUri() {
+        return serverUri;
+    }
+
+    public void setServerUri(String serverUri) {
+        this.serverUri = serverUri;
+    }
+
     @Override
     public String toString() {
         return "AppConfig{" +
@@ -92,6 +101,7 @@ public class AppConfig {
                 ", maxConnections=" + maxConnections +
                 ", enableLogging=" + enableLogging +
                 ", isMaster=" + isMaster +
+                ", serverUri='" + serverUri + '\'' +
                 '}';
     }
 }
