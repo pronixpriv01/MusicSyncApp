@@ -12,6 +12,7 @@ public class AppConfig {
     private boolean enableLogging;
     private boolean isMaster;
     private String serverUri = "ws://localhost:8887";
+    private int port = 8887;
 
     /**
      * Konstruktor der AppConfig-Klasse.
@@ -94,6 +95,14 @@ public class AppConfig {
         this.serverUri = serverUri;
     }
 
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
     @Override
     public String toString() {
         return "AppConfig{" +
@@ -102,6 +111,7 @@ public class AppConfig {
                 ", enableLogging=" + enableLogging +
                 ", isMaster=" + isMaster +
                 ", serverUri='" + serverUri + '\'' +
+                ", port=" + port +
                 '}';
     }
 }
