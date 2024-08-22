@@ -3,8 +3,10 @@ package com.musicapp.core;
 import com.musicapp.network.Client;
 import com.musicapp.network.Master;
 import com.musicapp.util.AppConfig;
+import com.musicapp.util.ConfigLoader;
 import com.musicapp.util.StringUtil;
 
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -124,15 +126,12 @@ public class MusicApp {
      * @param args Die Startparameter der Anwendung.
      */
     public static void main(String [] args) {
-        AppConfig config = new AppConfig();
-        config.setStartParameter("low-latency");
-        config.setMaxConnections(50);
-        config.setEnableLogging(true);
-        config.setMaster(true);
-
-        MusicApp app = new MusicApp(config);
-        app.start();
-
-        System.out.println(StringUtil.toString(app));
+        try {
+            AppConfig config = ConfigLoader.loadFromProperties("src/main/resources/AppConfig.properties");
+            MusicApp app = new MusicApp(config);
+            app.start();
+        } catch (IOException e) {
+            Logger.getLogger(MusicApp.class.getName()).log(Level.SEVERE, "Fehler beim Laden der Konfiguration", e);
+        }
     }
 }
