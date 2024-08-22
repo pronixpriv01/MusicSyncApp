@@ -1,34 +1,49 @@
 package com.musicapp.network;
 
 import com.musicapp.util.AppConfig;
+import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.handshake.ServerHandshake;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.logging.Logger;
 
-public class Client {
+public class Client extends WebSocketClient {
 
     private static final Logger logger = Logger.getLogger(Client.class.getName());
-    private AppConfig config;
 
-    public Client(AppConfig config) {
-        this.config = config;
+    public Client(AppConfig config, String serverUri) throws URISyntaxException {
+        super(new URI(serverUri));
+    }
+
+    @Override
+    public void onOpen(ServerHandshake handshake) {
+        logger.info("Mit Master verbunden.");
+    }
+
+    @Override
+    public void onMessage(String message) {
+        logger.info("Befehl vom Master erhalten: " + message);
+        // Hier könntest du auf Befehle des Masters reagieren und z.B. die Musikwiedergabe starten
+    }
+
+    @Override
+    public void onClose(int code, String reason, boolean remote) {
+        logger.info("Verbindung zum Master geschlossen.");
+    }
+
+    @Override
+    public void onError(Exception ex) {
+        logger.severe("Fehler im Client WebSocket: " + ex.getMessage());
     }
 
     public void connectToMaster() {
-        logger.info("Client verbindet sich mit dem Master.");
-        // Verbindungsaufbau zum Master
+        this.connect();
+        logger.info("Versuche, eine Verbindung zum Master herzustellen...");
     }
 
-    public void start() {
-        logger.info("Client startet die Wiedergabe.");
-        // Empfange Steuerbefehle und synchronisiere die Musikwiedergabe
-    }
-
-    public void stop() {
-        logger.info("Client wird gestoppt.");
-        // Stoppe die Wiedergabe und trenne die Verbindung zum Master
-    }
-
-    public void disconnect() {
-        logger.info("Client trennt die Verbindung zum Master.");
-        // Trenne die Verbindung zum Master
+    public void disconnectFromMaster() {
+        this.close();
+        logger.info("Verbindung zum Master getrennt.");
     }
 }
