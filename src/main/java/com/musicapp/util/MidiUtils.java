@@ -63,9 +63,9 @@ public class MidiUtils {
         synthesizer.close();
     }
 
-    public int getInstrumentNumber() {
+    /*public int getInstrumentNumber() {
         return instrumentNr;
-    }
+    }*/
 
     public static ShortMessage createShortmessage(int channelNr, int pitch, int velocity) throws InvalidMidiDataException {
         ShortMessage noteOn = new ShortMessage(ShortMessage.NOTE_ON, channelNr, pitch, velocity);
@@ -79,10 +79,9 @@ public class MidiUtils {
         return noteOn;
     }
 
-    public void setInstrumentNumber(int instrumentNumber) {
-
+    /*public void setInstrumentNumber(int instrumentNumber){
         if (instrumentNumber >= 0 && instrumentNumber < 235) {
             instrumentNr = instrumentNumber;
         }
-    }
+    } */
 }
