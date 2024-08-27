@@ -4,7 +4,7 @@ import javax.sound.midi.*;
 
 public class MidiUtils {
 
-    static Synthesizer synthesizer;
+    public static Synthesizer synthesizer;
 
     static {
         try {
@@ -15,16 +15,25 @@ public class MidiUtils {
     }
 
     ;
-    int instrumentNr;
-    static Instrument[] instruments = synthesizer.getDefaultSoundbank().getInstruments();;
-    MidiChannel channel;
-    int pitch = 60;
-    int velocity = 100;
-    Receiver receiver = synthesizer.getReceiver();
-    ShortMessage noteOn;
-    ShortMessage noteOff;
-    int duration = 1000;
-    int channelNr = 0;
+    static int instrumentNr;
+    public static Instrument[] instruments = synthesizer.getDefaultSoundbank().getInstruments();;
+    static MidiChannel channel;
+    static int pitch = 60;
+    static int velocity = 100;
+    static Receiver receiver;
+
+    static {
+        try {
+            receiver = synthesizer.getReceiver();
+        } catch (MidiUnavailableException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    static ShortMessage noteOn;
+    static ShortMessage noteOff;
+    static int duration = 1000;
+    static int channelNr = 0;
 
 
 
@@ -32,7 +41,9 @@ public class MidiUtils {
     }
 
 
-    public void playMidi () throws MidiUnavailableException, InvalidMidiDataException, InterruptedException {
+    public static void playMidi (int instrumentNr) throws MidiUnavailableException, InvalidMidiDataException, InterruptedException {
+
+
         synthesizer.open();
 
         // Wähle ein Instrument aus (z.B. das erste Instrument)
@@ -44,7 +55,7 @@ public class MidiUtils {
 
 
         // Setze das Instrument auf dem Kanal
-        channel.programChange(instruments[getInstrumentNumber()].getPatch().getProgram());
+        channel.programChange(instruments[instrumentNr].getPatch().getProgram());
 
         noteOn = createShortmessage(channelNr, pitch, velocity);
         noteOff = createShortmessageOff(channelNr, pitch, velocity);
@@ -61,13 +72,13 @@ public class MidiUtils {
         return instrumentNr;
     }
 
-    public ShortMessage createShortmessage(int channelNr, int pitch, int velocity) throws InvalidMidiDataException {
+    public static ShortMessage createShortmessage(int channelNr, int pitch, int velocity) throws InvalidMidiDataException {
         ShortMessage noteOn = new ShortMessage(ShortMessage.NOTE_ON, channelNr, pitch, velocity);
         receiver.send(noteOn, -1);
         return noteOn;
     }
 
-    public ShortMessage createShortmessageOff(int channelNr, int pitch, int velocity) throws InvalidMidiDataException {
+    public static ShortMessage createShortmessageOff(int channelNr, int pitch, int velocity) throws InvalidMidiDataException {
         ShortMessage noteOn = new ShortMessage(ShortMessage.NOTE_OFF, channelNr, pitch, velocity);
         receiver.send(noteOn, -1);
         return noteOn;
@@ -76,18 +87,7 @@ public class MidiUtils {
     public void setInstrumentNumber(int instrumentNumber) {
 
         if (instrumentNumber > 0 && instrumentNumber < 235) {
-            this.instrumentNr = instrumentNumber;
+            instrumentNr = instrumentNumber;
         }
-    }
-
-    public int selectInstrument (int instrumentNumber) {
-        this.instrumentNr = instrumentNumber;
-
-        MidiChannel[] channels = synthesizer.getChannels();
-        MidiChannel channel = channels[0];
-
-        // Setze das Instrument auf dem Kanal
-        channel.programChange(instruments[200].getPatch().getProgram());
-        return instrumentNumber;
     }
 }
