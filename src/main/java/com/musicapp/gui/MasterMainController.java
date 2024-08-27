@@ -1,5 +1,8 @@
 package com.musicapp.gui;
 
+import com.musicapp.network.Master;
+import com.musicapp.util.AppConfig;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -16,8 +19,11 @@ public class MasterMainController {
     public TextField setMaxConnections;
     @FXML
     public Label maxCon;
+    public Button connect;
     @FXML
     private Button back;
+
+    AppConfig appconfig;
 
 
     public void back () throws Exception {
@@ -28,4 +34,10 @@ public class MasterMainController {
         stage.setScene(new Scene(root));
 
     }
+    @FXML
+    public void connectToClients (AppConfig appconfig) {
+        Master master = new Master(appconfig);
+    }
+
+
 }

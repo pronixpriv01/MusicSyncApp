@@ -48,6 +48,16 @@ public class MainController {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        } else {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/clientWait.fxml"));
+            try {
+                Parent root = loader.load();
+                Stage stage = (Stage) toMainBtn.getScene().getWindow();
+                stage.setScene(new Scene(root));
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
     }

@@ -19,7 +19,7 @@ public class Master {
     }
 
     public void stop() {
-        logger.info("Maser wird gestoppt");
+        logger.info("Master wird gestoppt");
         // Stoppe die Steuerungslogik und schließe die Netzwerkanbindung
     }
 }
