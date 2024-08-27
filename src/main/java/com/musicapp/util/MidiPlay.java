@@ -1,6 +1,6 @@
 package com.musicapp.util;
 
-import javax.sound.midi.InvalidMidiDataException;
+
 import javax.sound.midi.MidiUnavailableException;
 
     public class MidiPlay extends MidiUtils {
