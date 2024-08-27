@@ -12,6 +12,6 @@ public class AudioTest {
 
         // über die statische Methode playMidi in der Klass MidiPlay lassen sich Klänge testen und verwenden.
         // Als Parameter wird ein Wert von 0 - 234 übergeben - für jeden Wert ein Instrument.
-        MidiUtils.playMidi(185);
+        MidiUtils.playMidi(24);
     }
 }

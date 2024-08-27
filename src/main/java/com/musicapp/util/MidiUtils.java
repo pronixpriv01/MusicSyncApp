@@ -14,9 +14,8 @@ public class MidiUtils {
         }
     }
 
-
     static int instrumentNr;
-    public static Instrument[] instruments = synthesizer.getDefaultSoundbank().getInstruments();
+    static Instrument[] instruments = synthesizer.getDefaultSoundbank().getInstruments();
     static MidiChannel channel;
     static int pitch = 60;
     static int velocity = 100;
@@ -35,14 +34,11 @@ public class MidiUtils {
     static int duration = 1000;
     static int channelNr = 0;
 
+    public static void playMidi (int instrumentNumber) throws MidiUnavailableException, InvalidMidiDataException, InterruptedException {
 
-
-    public MidiUtils() {
-    }
-
-
-    public static void playMidi (int instrumentNr) throws MidiUnavailableException, InvalidMidiDataException, InterruptedException {
-
+        if (instrumentNumber >= 0 && instrumentNumber < 235) {
+            instrumentNr = instrumentNumber;
+        }
 
         synthesizer.open();
 
@@ -52,7 +48,6 @@ public class MidiUtils {
         // Hole den ersten MIDI-Kanal
         MidiChannel[] channels = synthesizer.getChannels();
         channel = channels[0];
-
 
         // Setze das Instrument auf dem Kanal
         channel.programChange(instruments[instrumentNr].getPatch().getProgram());
@@ -86,7 +81,7 @@ public class MidiUtils {
 
     public void setInstrumentNumber(int instrumentNumber) {
 
-        if (instrumentNumber > 0 && instrumentNumber < 235) {
+        if (instrumentNumber >= 0 && instrumentNumber < 235) {
             instrumentNr = instrumentNumber;
         }
     }
