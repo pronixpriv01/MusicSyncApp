@@ -14,9 +14,9 @@ public class MidiUtils {
         }
     }
 
-    ;
+
     static int instrumentNr;
-    public static Instrument[] instruments = synthesizer.getDefaultSoundbank().getInstruments();;
+    public static Instrument[] instruments = synthesizer.getDefaultSoundbank().getInstruments();
     static MidiChannel channel;
     static int pitch = 60;
     static int velocity = 100;
@@ -37,7 +37,7 @@ public class MidiUtils {
 
 
 
-    public MidiUtils() throws MidiUnavailableException {
+    public MidiUtils() {
     }
 
 
