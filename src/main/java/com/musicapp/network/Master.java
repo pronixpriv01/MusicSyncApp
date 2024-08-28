@@ -78,6 +78,14 @@ public class Master extends WebSocketServer {
     }
 
     /**
+     * Stoppt die Steuerungslogik und schließt die Netzwerkanbindung.
+     */
+    public void stop() {
+        logger.info("Master wird gestoppt");
+        stopHeartbeat();
+    }
+
+    /**
      * Aktualisiert den Status eines Clients in der Lobby.
      *
      * @param conn   Der WebSocket des Clients.
