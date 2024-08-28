@@ -3,6 +3,7 @@ package com.musicapp.core;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Ein einfach implementierter Thread-Pool-Manager, der Threads manuell erstellt und verwaltet.
@@ -35,6 +36,31 @@ public class ManualThreadPoolManager {
         }
         taskQueue.add(task);
         notify();  // Weckt einen Thread auf, um die Aufgabe zu verarbeiten
+    }
+
+    /**
+     * Plant eine wiederholte Aufgabe mit einem bestimmten Intervall.
+     *
+     * @param task Die auszuführende Aufgabe.
+     * @param interval Das Intervall zwischen den Ausführungen in Millisekunden.
+     */
+    public synchronized void scheduleRepeatedTask(Runnable task, long interval) {
+        submitTask(() -> {
+            while (!isStopped) {
+                long startTime = System.currentTimeMillis();
+                task.run();
+                long endTime = System.currentTimeMillis();
+                long sleepTime = interval - (endTime -startTime);
+                if (sleepTime > 0) {
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(sleepTime);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -87,7 +113,7 @@ public class ManualThreadPoolManager {
                 try {
                     task.run();
                 } catch (RuntimeException e) {
-                    // Fehlerbehandlung hier
+                    e.printStackTrace();
                 }
             }
         }
