@@ -5,21 +5,19 @@ import com.musicapp.network.Master;
 import com.musicapp.util.AppConfig;
 import com.musicapp.util.ConfigLoader;
 import com.musicapp.util.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Die Klasse MusicApp verwaltet den Lebenszyklus der Anwendung.
  * Sie bietet Methoden zum Starten, Stoppen, Neustarten und Wiederherstellen
  * der Anwendung nach unerwarteten Abbrüchen.
- *
- * @author pronixpriv*/
+ */
 public class MusicApp {
 
-
-    private static final Logger logger = Logger.getLogger(MusicApp.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(MusicApp.class);
     private final AppConfig config;
     private Master master;
     private Client client;
@@ -29,31 +27,30 @@ public class MusicApp {
      * Initialisiert die Anwendung mit den übergebenen Konfigurationseinstellungen.
      *
      * @param config Die Konfigurationseinstellungen der Anwendung
-     * */
+     */
     public MusicApp(AppConfig config) {
         this.config = config;
-        logger.log(Level.INFO, "MusicApp-Instanz wurde erstellt: " + StringUtil.toString(this));
+        logger.info("MusicApp-Instanz wurde erstellt: {}", StringUtil.toString(this));
     }
 
     /**
      * Startet die Anwendung.
      * Initialisiert notwendige Komponenten und startet die Hauptlogik.
-     * */
+     */
     public void start() {
-        logger.log(Level.INFO, "MusicApp wird gestartet mit Konfiguration: " + StringUtil.toString(config));
+        logger.info("MusicApp wird gestartet mit Konfiguration: {}", StringUtil.toString(config));
         try {
             if (config.isMaster()) {
                 master = new Master(config, config.getPort());
-                master.startServer();
-                master.sendCommandToClients("start");
+                master.start();
             } else {
                 client = new Client(config, config.getServerUri());
-                client.connectToMaster();
+                client.connect();
             }
-            System.out.println("MusicApp gestartet.");
+            logger.info("MusicApp gestartet.");
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Fehler beim Starten der Anwendung", e);
-            handelException(e);
+            logger.error("Fehler beim Starten der Anwendung", e);
+            handleException(e);
         }
     }
 
@@ -62,18 +59,18 @@ public class MusicApp {
      * Führt notwendige Aufräumarbeiten durch.
      */
     public void stop() {
-        logger.log(Level.INFO, "MusicApp wird gestoppt.");
+        logger.info("MusicApp wird gestoppt.");
         try {
             if (master != null) {
-                master.stopServer();
+                master.stop();
             }
             if (client != null) {
-                client.disconnectFromMaster();
+                client.close();
             }
-            System.out.println("MusicApp gestoppt.");
+            logger.info("MusicApp gestoppt.");
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Fehler beim Stoppen der Anwendung", e);
-            handelException(e);
+            logger.error("Fehler beim Stoppen der Anwendung", e);
+            handleException(e);
         }
     }
 
@@ -82,27 +79,27 @@ public class MusicApp {
      * Führt einen Neustart durch, indem die Anwendung gestoppt und dann erneut gestartet wird.
      */
     public void restart() {
-        logger.log(Level.INFO, "MusicApp wird neu gestartet.");
+        logger.info("MusicApp wird neu gestartet.");
         stop();
         start();
     }
 
     /**
      * Stellt den Zustand der Anwendung nach einem unerwarteten Abbruch wieder her.
-     * Diese Methode versucht, die Anwendung in einen stabilen Zustand zu versetzen.
      */
     public void recover() {
-        logger.log(Level.INFO, "MusicApp wird nach unerwartetem Abbruch wiederhergestellt.");
+        logger.info("MusicApp wird nach unerwartetem Abbruch wiederhergestellt.");
         try {
-            System.out.println("MusicApp wiederhergestellt");
+            // Logik zur Wiederherstellung der Anwendung
+            start();
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Fehler bei der Wiederherstellung der Anwendung", e);
-            handelException(e);
+            logger.error("Fehler bei der Wiederherstellung der Anwendung", e);
+            handleException(e);
         }
     }
 
-    private void handelException(Exception e) {
-        logger.log(Level.SEVERE, "Eine unerwartete Ausnahme ist aufgetreten", e);
+    private void handleException(Exception e) {
+        logger.error("Eine unerwartete Ausnahme ist aufgetreten", e);
     }
 
     /**
@@ -125,13 +122,13 @@ public class MusicApp {
      *
      * @param args Die Startparameter der Anwendung.
      */
-    public static void main(String [] args) {
+    public static void main(String[] args) {
         try {
             AppConfig config = ConfigLoader.loadFromProperties("src/main/resources/AppConfig.properties");
             MusicApp app = new MusicApp(config);
             app.start();
         } catch (IOException e) {
-            Logger.getLogger(MusicApp.class.getName()).log(Level.SEVERE, "Fehler beim Laden der Konfiguration", e);
+            logger.error("Fehler beim Laden der Konfiguration", e);
         }
     }
 }
