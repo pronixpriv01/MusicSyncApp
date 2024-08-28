@@ -1,5 +1,8 @@
 package com.musicapp.gui;
 
+import com.musicapp.network.Client;  // استيراد كلاس Client من الحزمة network
+import com.musicapp.network.Master;  // استيراد كلاس Master من الحزمة network
+import com.musicapp.util.AppConfig;  // افتراض أن AppConfig موجود في مشروعك
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -7,11 +10,16 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.net.URISyntaxException;
+
 public class Main extends Application {
 
     private boolean isMaster;
     private Button startVisualizerButton;
     private Stage primaryStage;  // Save reference to primary stage
+    private AppConfig appConfig; // Configuration object (you might need to implement this class or adjust accordingly)
+    private Master master;
+    private Client client;
 
     @Override
     public void start(Stage primaryStage) {
@@ -23,6 +31,7 @@ public class Main extends Application {
 
     private void initialize(Stage primaryStage) {
         // Initialization code if needed
+        appConfig = new AppConfig();  // Assuming you have an AppConfig class for configuration
     }
 
     private void renderUI(Stage primaryStage) {
@@ -36,13 +45,13 @@ public class Main extends Application {
         Button masterButton = new Button("Master");
         masterButton.setOnAction(e -> {
             isMaster = true;
-            updateLayout(primaryStage);
+            startMaster();
         });
 
         Button clientButton = new Button("Client");
         clientButton.setOnAction(e -> {
             isMaster = false;
-            updateLayout(primaryStage);
+            startClient();
         });
 
         // Button to start the Visualizer
@@ -61,12 +70,6 @@ public class Main extends Application {
     }
 
     private void updateLayout(Stage primaryStage) {
-        if (isMaster) {
-            System.out.println("Master role selected");
-        } else {
-            System.out.println("Client role selected");
-        }
-
         // Recalculate layout for the visualizer button
         double width = primaryStage.getWidth();
         double height = primaryStage.getHeight();
@@ -83,6 +86,26 @@ public class Main extends Application {
         Visualizer visualizer = new Visualizer();
         visualizer.setMainWindow(primaryStage);  // Pass reference to the main window
         visualizer.start(visualizerStage);
+    }
+
+    private void startMaster() {
+        if (master == null) {
+            master = new Master(appConfig, 8080); // Specify port or use config
+            master.startServer();
+        }
+        System.out.println("Master started.");
+    }
+
+    private void startClient() {
+        if (client == null) {
+            try {
+                client = new Client(appConfig, "ws://localhost:8080"); // Specify server URI or use config
+                client.connectToMaster();
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
+        }
+        System.out.println("Client started.");
     }
 
     public static void main(String[] args) {
