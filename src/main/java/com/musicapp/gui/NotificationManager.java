@@ -1,4 +1,4 @@
-package com.musicapp.gui.gui;
+package com.musicapp.gui;
 
 import javafx.animation.ScaleTransition;
 import javafx.scene.text.Text;

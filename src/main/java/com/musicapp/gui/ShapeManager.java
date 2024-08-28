@@ -1,4 +1,4 @@
-package com.musicapp.gui.gui;
+package com.musicapp.gui;
 
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
