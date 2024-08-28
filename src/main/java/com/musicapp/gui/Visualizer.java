@@ -1,9 +1,9 @@
 package com.musicapp.gui;
 
 import javafx.animation.RotateTransition;
+import javafx.animation.ScaleTransition;
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.Pane;
@@ -14,11 +14,11 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Synthesizer;
+import javafx.scene.control.Alert;
 
 public class Visualizer extends Application {
 
@@ -62,8 +62,11 @@ public class Visualizer extends Application {
         Pane pane = new Pane();
         Scene scene = new Scene(pane, 800, 600);
 
-        // Initialize drawing elements
-        outerCircle = new Circle();
+        // Initialize MIDI
+        initializeMidi();
+
+        // Initialize outer circle
+        outerCircle = new Circle(radius);
         outerCircle.setFill(null);
         outerCircle.setStroke(Color.BLACK);
         outerCircle.setStrokeWidth(3);
@@ -72,13 +75,14 @@ public class Visualizer extends Application {
         // Initialize shape manager with default shape (pentagon)
         shapeManager = new ShapeManager(pane, numSides);
 
-        // Labels for notes
+        // Initialize note labels
         for (int i = 0; i < 12; i++) {
-            noteLabels[i] = new Text();
-            noteLabels[i].setFill(Color.RED);
-            noteLabels[i].setTextAlignment(TextAlignment.CENTER);
-            noteLabels[i].setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
-            pane.getChildren().add(noteLabels[i]);
+            Text noteLabel = new Text(notes[i]);
+            noteLabel.setFill(Color.RED);
+            noteLabel.setTextAlignment(TextAlignment.CENTER);
+            noteLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+            pane.getChildren().add(noteLabel);
+            noteLabels[i] = noteLabel;
         }
 
         // Speed control slider
@@ -88,7 +92,6 @@ public class Visualizer extends Application {
         speedSlider.setShowTickLabels(true);
         speedSlider.setMajorTickUnit(0.05);
         speedSlider.setMinorTickCount(4);
-        speedSlider.setBlockIncrement(0.01);
         speedSlider.setSnapToTicks(true);
 
         // Volume control slider
@@ -101,13 +104,13 @@ public class Visualizer extends Application {
         volumeSlider.setSnapToTicks(true);
 
         // Control buttons
-        toggleButton = createStyledButton("Start");
+        toggleButton = createStyledButton("Start / Stop");
         leftButton = createStyledButton("← LEFT");
         rightButton = createStyledButton("RIGHT →");
         changeShapeButton = createStyledButton("Change Shape");
         backButton = createStyledButton("Back");
 
-        toggleButton.setOnAction(e -> toggleStartStop());
+        toggleButton.setOnAction(e -> isRunning = !isRunning); // Toggle running state
         leftButton.setOnAction(e -> direction = -1);
         rightButton.setOnAction(e -> direction = 1);
         changeShapeButton.setOnAction(e -> toggleShape());
@@ -123,13 +126,6 @@ public class Visualizer extends Application {
         // Initial layout update
         updateLayout(pane);
 
-        // Animation loop for rotation
-        RotateTransition rotateTransition = new RotateTransition(Duration.millis(1000), outerCircle);
-        rotateTransition.setCycleCount(RotateTransition.INDEFINITE);
-        rotateTransition.setInterpolator(javafx.animation.Interpolator.LINEAR);
-        rotateTransition.setRate(rotationSpeed);
-        rotateTransition.play();
-
         // Animation loop for checking collisions
         new javafx.animation.AnimationTimer() {
             @Override
@@ -137,7 +133,6 @@ public class Visualizer extends Application {
                 if (isRunning) {
                     angle += direction * rotationSpeed;
                     shapeManager.updateShape(centerX, centerY, radius, angle);
-                    updateNoteLabels();
                     rotationSpeed = speedSlider.getValue();
 
                     checkShapeNoteCollision();
@@ -149,9 +144,6 @@ public class Visualizer extends Application {
         volumeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
             currentVolume = newVal.intValue();
         });
-
-        // Initialize MIDI
-        initializeMidi();
 
         primaryStage.setTitle("JavaFX MIDI Demo");
         primaryStage.setScene(scene);
@@ -208,7 +200,7 @@ public class Visualizer extends Application {
         centerY = height / 2;
         radius = Math.min(width, height) / 4;
 
-        // Update circle
+        // Update outer circle
         outerCircle.setCenterX(centerX);
         outerCircle.setCenterY(centerY);
         outerCircle.setRadius(radius);
@@ -216,8 +208,8 @@ public class Visualizer extends Application {
         // Adjust shape
         shapeManager.updateShape(centerX, centerY, radius, angle);
 
-        // Adjust note labels
-        updateNoteLabels();
+        // Adjust note positions
+        updateNotePositions();
 
         // Layout buttons and sliders
         double sliderHeightOffset = radius + 60;
@@ -253,15 +245,14 @@ public class Visualizer extends Application {
         backButton.setLayoutY(20);
     }
 
-    private void updateNoteLabels() {
+    private void updateNotePositions() {
         for (int i = 0; i < 12; i++) {
             double theta = 2 * Math.PI / 12 * i;
             double x = centerX + Math.cos(theta) * radius;
             double y = centerY + Math.sin(theta) * radius;
 
-            noteLabels[i].setText(notes[i]);
-            noteLabels[i].setX(x - 10);
-            noteLabels[i].setY(y + 5);
+            noteLabels[i].setX(x - noteLabels[i].getLayoutBounds().getWidth() / 2);
+            noteLabels[i].setY(y + noteLabels[i].getLayoutBounds().getHeight() / 4);
         }
     }
 
@@ -269,76 +260,79 @@ public class Visualizer extends Application {
         boolean collisionDetected = false;
         int noteIndexToPlay = -1;
 
-        double collisionThreshold = 15.0;
+        double collisionThreshold = 20.0;
 
         for (Line line : shapeManager.getShapeLines()) {
-            double[] point1 = {line.getStartX(), line.getStartY()};
-            double[] point2 = {line.getEndX(), line.getEndY()};
+            double vertexX = line.getEndX();
+            double vertexY = line.getEndY();
 
-            double[][] pointsToCheck = { point1, point2 };
+            for (int j = 0; j < 12; j++) {
+                Text noteLabel = noteLabels[j];
+                double noteX = noteLabel.getX() + noteLabel.getLayoutBounds().getWidth() / 2;
+                double noteY = noteLabel.getY() - noteLabel.getLayoutBounds().getHeight() / 2;
+                double distance = Math.sqrt(Math.pow(vertexX - noteX, 2) + Math.pow(vertexY - noteY, 2));
 
-            for (double[] point : pointsToCheck) {
-                double pointX = point[0];
-                double pointY = point[1];
-
-                for (int i = 0; i < 12; i++) {
-                    double noteCenterX = noteLabels[i].getX() + noteLabels[i].getLayoutBounds().getWidth() / 2;
-                    double noteCenterY = noteLabels[i].getY() + noteLabels[i].getLayoutBounds().getHeight() / 2;
-
-                    double distance = Math.sqrt(Math.pow(pointX - noteCenterX, 2) + Math.pow(pointY - noteCenterY, 2));
-
-                    if (distance <= collisionThreshold) {
-                        noteIndexToPlay = i;
-                        collisionDetected = true;
-
-                        noteLabels[i].setFill(Color.GREEN);
-                        break;
-                    } else {
-                        noteLabels[i].setFill(Color.RED);
-                    }
+                if (distance < collisionThreshold) {
+                    noteIndexToPlay = j;
+                    collisionDetected = true;
+                    break;
                 }
-
-                if (collisionDetected) break;
             }
 
-            if (collisionDetected) break;
-        }
-
-        if (collisionDetected) {
-            if (currentlyPlayingNote != null && currentlyPlayingNote != notePitches[noteIndexToPlay]) {
-                sendMidiNoteOff(currentlyPlayingNote);
+            if (collisionDetected) {
+                break;
             }
-
-            currentlyPlayingNote = notePitches[noteIndexToPlay];
-            sendMidiNoteOn(currentlyPlayingNote);
-
-        } else if (currentlyPlayingNote != null) {
-            sendMidiNoteOff(currentlyPlayingNote);
-            currentlyPlayingNote = null;
         }
-    }
 
-    private void sendMidiNoteOn(int pitch) {
-        if (receiver != null) {
-            try {
-                ShortMessage message = new ShortMessage();
-                message.setMessage(ShortMessage.NOTE_ON, 0, pitch, currentVolume);
-                receiver.send(message, -1);
-            } catch (Exception e) {
-                e.printStackTrace();
+        if (collisionDetected && noteIndexToPlay != -1) {
+            if (currentlyPlayingNote == null || !currentlyPlayingNote.equals(noteIndexToPlay)) {
+                playMidiTone(noteIndexToPlay, currentVolume);
+                currentlyPlayingNote = noteIndexToPlay;
+
+                // Add visual effect to noteLabel when it is hit
+                Text noteLabel = noteLabels[noteIndexToPlay];
+                ScaleTransition scaleTransition = new ScaleTransition(Duration.millis(200), noteLabel);
+                scaleTransition.setFromX(1.0);
+                scaleTransition.setToX(1.5);
+                scaleTransition.setFromY(1.0);
+                scaleTransition.setToY(1.5);
+                scaleTransition.setCycleCount(2);
+                scaleTransition.setAutoReverse(true);
+                scaleTransition.play();
+            }
+        } else {
+            if (currentlyPlayingNote != null) {
+                stopMidiTone(currentlyPlayingNote);
+                currentlyPlayingNote = null;
             }
         }
     }
 
-    private void sendMidiNoteOff(int pitch) {
-        if (receiver != null) {
-            try {
-                ShortMessage message = new ShortMessage();
-                message.setMessage(ShortMessage.NOTE_OFF, 0, pitch, 0);
-                receiver.send(message, -1);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+    private void playMidiTone(int noteIndex, int volume) {
+        try {
+            int pitch = notePitches[noteIndex];
+            int velocity = volume;
+
+            ShortMessage noteOn = new ShortMessage();
+            noteOn.setMessage(ShortMessage.NOTE_ON, 0, pitch, velocity);
+            receiver.send(noteOn, -1);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void stopMidiTone(int noteIndex) {
+        try {
+            int pitch = notePitches[noteIndex];
+            int velocity = 0;
+
+            ShortMessage noteOff = new ShortMessage();
+            noteOff.setMessage(ShortMessage.NOTE_OFF, 0, pitch, velocity);
+            receiver.send(noteOff, -1);
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -370,3 +364,4 @@ public class Visualizer extends Application {
         launch(args);
     }
 }
+
