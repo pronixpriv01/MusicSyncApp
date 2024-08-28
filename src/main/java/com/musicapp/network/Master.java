@@ -10,9 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.time.Instant;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Die Master-Klasse steuert die Synchronisation und Verwaltung der verbundenen Clients.
@@ -29,7 +26,7 @@ public class Master extends WebSocketServer {
      * @param config Die AppConfig-Instanz für die Serverkonfiguration.
      * @param port   Der Port, auf dem der Server läuft.
      */
-    public Master(AppConfig config, int port, ManualThreadPoolManager threadPoolManager) {
+    public Master(AppConfig config, int port) {
         super(new InetSocketAddress(port));
         this.threadPool = new ManualThreadPoolManager(3);
     }
