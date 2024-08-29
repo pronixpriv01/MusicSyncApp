@@ -9,24 +9,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Die Klasse MasterApplication stellt die GUI für den Master-Teil der Anwendung bereit.
+ * Die Klasse ClientApplication stellt die GUI für den Client-Teil der Anwendung bereit.
  */
-public class MasterApplication extends Application {
+public class ClientApplication extends Application {
 
-    private static final Logger logger = LoggerFactory.getLogger(MasterApplication.class);
+    private static final Logger logger = LoggerFactory.getLogger(ClientApplication.class);
 
     @Override
     public void start(Stage stage) throws Exception {
         try {
-            logger.info("Master GUI wird gestartet.");
-            // Lade die FXML-Datei für die Master-GUI
-            Parent root = FXMLLoader.load(getClass().getResource("/master/masterMain.fxml"));
+            logger.info("Client GUI wird gestartet.");
+            // Lade die FXML-Datei für die Client-GUI
+            Parent root = FXMLLoader.load(getClass().getResource("/client/clientMain.fxml"));
             Scene scene = new Scene(root, 600, 400);
-            stage.setTitle("Master Control Panel");
+            stage.setTitle("Client Control Panel");
             stage.setScene(scene);
             stage.show();
         } catch (Exception e) {
-            logger.error("Fehler beim Laden der Master GUI", e);
+            logger.error("Fehler beim Laden der Client GUI", e);
         }
     }
 

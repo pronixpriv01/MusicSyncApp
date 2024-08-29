@@ -18,7 +18,7 @@ import java.time.Instant;
 public class Master extends WebSocketServer {
 
     private static final Logger logger = LoggerFactory.getLogger(Master.class);
-    private final Lobby lobby = new Lobby();
+    private Lobby lobby;  // Lobby als Instanzvariable
     private final ManualThreadPoolManager threadPool;
     private boolean isPlaybackRunning = false;
     private MasterMainController controller;
@@ -37,6 +37,15 @@ public class Master extends WebSocketServer {
     public Master(AppConfig config, int port) {
         super(new InetSocketAddress(port));
         this.threadPool = new ManualThreadPoolManager(3);
+    }
+
+    /**
+     * Setzt die Lobby für diesen Master.
+     *
+     * @param lobby Die Lobby-Instanz, die vom Master verwaltet werden soll.
+     */
+    public void setLobby(Lobby lobby) {
+        this.lobby = lobby;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.musicapp.network;
 
 import com.musicapp.core.ManualThreadPoolManager;
+import com.musicapp.gui.Visualizer;
 import com.musicapp.util.AppConfig;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -10,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
+import javafx.application.Platform;
+import javafx.stage.Stage;
 
 /**
  * Die Client-Klasse stellt eine Verbindung zum Master her und empfängt Kommandos zur synchronisierten Wiedergabe.
@@ -20,7 +23,8 @@ public class Client extends WebSocketClient {
     private long latency = 0;
     private long jitter = 0;
     private final ManualThreadPoolManager threadPool;
-    private final int BUFFER_THRESHOLD_MS = 50;  // Schwellenwert für den Puffer
+    private Stage mainWindowStage;  // Referenz zur Hauptfenster-Stage
+    private Visualizer visualizer;  // Referenz zum Visualizer
 
     /**
      * Konstruktor zur Erstellung eines neuen Clients mit Serververbindung.
@@ -47,7 +51,7 @@ public class Client extends WebSocketClient {
         if (message.startsWith("start_playback")) {
             long startTime = Long.parseLong(message.split(" ")[1]);
             long currentTime = Instant.now().toEpochMilli();
-            long delay = startTime - currentTime - latency - BUFFER_THRESHOLD_MS;
+            long delay = startTime - currentTime - latency;
             logger.info("Starte Wiedergabe in {} Millisekunden", delay);
             schedulePlayback(delay);
         } else if (message.equals("heartbeat")) {
@@ -69,6 +73,31 @@ public class Client extends WebSocketClient {
     @Override
     public void onError(Exception ex) {
         logger.error("Fehler im Client WebSocket: {}", ex.getMessage(), ex);
+    }
+
+    /**
+     * Setzt die Hauptfenster-Stage für die Interaktion mit der GUI.
+     *
+     * @param mainWindowStage Die Hauptfenster-Stage.
+     */
+    public void setMainWindowStage(Stage mainWindowStage) {
+        this.mainWindowStage = mainWindowStage;
+    }
+
+    /**
+     * Startet den Visualizer und zeigt die GUI an.
+     */
+    private void startVisualizer() {
+        Platform.runLater(() -> {
+            try {
+                Stage visualizerStage = new Stage();
+                visualizer = new Visualizer();
+                visualizer.setMainWindow(mainWindowStage);
+                visualizer.start(visualizerStage);
+            } catch (Exception e) {
+                logger.error("Fehler beim Starten des Visualizers: ", e);
+            }
+        });
     }
 
     /**
@@ -99,11 +128,11 @@ public class Client extends WebSocketClient {
     }
 
     /**
-     * Startet die synchronisierte Wiedergabe.
+     * Startet die synchronisierte Wiedergabe und den Visualizer.
      */
     private void startPlayback() {
         logger.info("Synchronisierte Wiedergabe gestartet.");
-        // Hier die Implementierung der Wiedergabelogik hinzufügen
+        startVisualizer(); // Starte den Visualizer
     }
 
     /**

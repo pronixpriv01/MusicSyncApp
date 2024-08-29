@@ -1,26 +1,32 @@
 package com.musicapp.core;
 
+import com.musicapp.gui.Main;
 import com.musicapp.network.Client;
+import com.musicapp.network.Lobby;
 import com.musicapp.network.Master;
+import com.musicapp.network.NetworkFactory;
 import com.musicapp.util.AppConfig;
 import com.musicapp.util.ConfigLoader;
 import com.musicapp.util.StringUtil;
+import javafx.application.Application;
+import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import java.net.URISyntaxException;
 
 /**
  * Die Klasse MusicApp verwaltet den Lebenszyklus der Anwendung.
  * Sie bietet Methoden zum Starten, Stoppen, Neustarten und Wiederherstellen
  * der Anwendung nach unerwarteten Abbrüchen.
  */
-public class MusicApp {
+public class MusicApp extends Application {
 
     private static final Logger logger = LoggerFactory.getLogger(MusicApp.class);
-    private final AppConfig config;
-    private Master master;
-    private Client client;
+    private static AppConfig config;
+    private static Master master;
+    private static Client client;
+    private static Lobby lobby;
 
     /**
      * Konstruktor der MusicApp-Klasse.
@@ -29,24 +35,29 @@ public class MusicApp {
      * @param config Die Konfigurationseinstellungen der Anwendung
      */
     public MusicApp(AppConfig config) {
-        this.config = config;
-        logger.info("MusicApp-Instanz wurde erstellt: {}", StringUtil.toString(this));
+        MusicApp.config = config;
+        logger.info("MusicApp-Instanz wurde erstellt: {}", StringUtil.toString(config));
     }
 
-    /**
-     * Startet die Anwendung.
-     * Initialisiert notwendige Komponenten und startet die Hauptlogik.
-     */
-    public void start() {
-        logger.info("MusicApp wird gestartet mit Konfiguration: {}", StringUtil.toString(config));
+    public MusicApp() {
+        // Leerer Standardkonstruktor, wenn die Konfiguration später geladen wird
+    }
+
+    @Override
+    public void start(Stage primaryStage) {
         try {
-            if (config.isMaster()) {
-                master = new Master(config, config.getPort());
-                master.start();
-            } else {
-                client = new Client(config, config.getServerUri());
-                client.connect();
+            // Konfiguration laden, wenn sie nicht bereits gesetzt ist
+            if (config == null) {
+                config = ConfigLoader.loadFromProperties("src/main/resources/AppConfig.properties");
             }
+
+            // Lobby initialisieren
+            lobby = new Lobby();
+
+            // Starten der Haupt-GUI
+            Main mainGUI = new Main();
+            mainGUI.start(primaryStage);
+
             logger.info("MusicApp gestartet.");
         } catch (Exception e) {
             logger.error("Fehler beim Starten der Anwendung", e);
@@ -55,51 +66,28 @@ public class MusicApp {
     }
 
     /**
-     * Stoppt die Anwendung.
-     * Führt notwendige Aufräumarbeiten durch.
+     * Methode zum Starten der Anwendung basierend auf der aktuellen Konfiguration.
      */
-    public void stop() {
-        logger.info("MusicApp wird gestoppt.");
-        try {
-            if (master != null) {
-                master.stop();
-            }
-            if (client != null) {
-                client.close();
-            }
-            logger.info("MusicApp gestoppt.");
-        } catch (Exception e) {
-            logger.error("Fehler beim Stoppen der Anwendung", e);
-            handleException(e);
+    public void launchAppBasedOnConfig() throws URISyntaxException {
+        if (config.isMaster()) {
+            master = NetworkFactory.createMaster(config);
+            master.setLobby(lobby);  // Setzt die Lobby im Master
+            master.start();
+            logger.info("Master gestartet auf Port: " + config.getPort());
+        } else {
+            client = NetworkFactory.createClient(config);
+            client.connect();
+            logger.info("Client verbunden mit Server: " + config.getServerUri());
         }
     }
 
     /**
-     * Startet die Anwendung neu.
-     * Führt einen Neustart durch, indem die Anwendung gestoppt und dann erneut gestartet wird.
+     * Setzt die Konfiguration für die MusicApp.
+     *
+     * @param config Die neue AppConfig-Instanz.
      */
-    public void restart() {
-        logger.info("MusicApp wird neu gestartet.");
-        stop();
-        start();
-    }
-
-    /**
-     * Stellt den Zustand der Anwendung nach einem unerwarteten Abbruch wieder her.
-     */
-    public void recover() {
-        logger.info("MusicApp wird nach unerwartetem Abbruch wiederhergestellt.");
-        try {
-            // Logik zur Wiederherstellung der Anwendung
-            start();
-        } catch (Exception e) {
-            logger.error("Fehler bei der Wiederherstellung der Anwendung", e);
-            handleException(e);
-        }
-    }
-
-    private void handleException(Exception e) {
-        logger.error("Eine unerwartete Ausnahme ist aufgetreten", e);
+    public void setConfig(AppConfig config) {
+        MusicApp.config = config;
     }
 
     /**
@@ -107,28 +95,83 @@ public class MusicApp {
      *
      * @return Die aktuelle AppConfig-Instanz.
      */
-    public AppConfig getConfig() {
+    public static AppConfig getConfig() {
         return config;
     }
 
-    @Override
-    public String toString() {
-        return StringUtil.toString(this);
+    /**
+     * Gibt die aktuelle Client-Instanz zurück.
+     *
+     * @return Die aktuelle Client-Instanz.
+     */
+    public static Client getClient() {
+        return client;
     }
 
     /**
-     * Hauptmethode zum Ausführen der Anwendung.
-     * Diese Methode dient als Einstiegspunkt für die Ausführung der MusicApp.
+     * Gibt die aktuelle Master-Instanz zurück.
      *
-     * @param args Die Startparameter der Anwendung.
+     * @return Die aktuelle Master-Instanz.
      */
-    public static void main(String[] args) {
+    public static Master getMaster() {
+        return master;
+    }
+
+    /**
+     * Setzt die Master-Instanz.
+     *
+     * @param newMaster Die neue Master-Instanz.
+     */
+    public static void setMaster(Master newMaster) {
+        master = newMaster;
+    }
+
+    /**
+     * Gibt die aktuelle Lobby-Instanz zurück.
+     *
+     * @return Die aktuelle Lobby-Instanz.
+     */
+    public static Lobby getLobby() {
+        return lobby;
+    }
+
+    /**
+     * Setzt die Lobby-Instanz.
+     *
+     * @param lobby Die Lobby-Instanz.
+     */
+    public void setLobby(Lobby lobby) {
+        MusicApp.lobby = lobby;
+    }
+
+    /**
+     * Stoppt die Anwendung.
+     * Führt notwendige Aufräumarbeiten durch.
+     */
+    public static void stopApp() {
+        logger.info("MusicApp wird gestoppt.");
         try {
-            AppConfig config = ConfigLoader.loadFromProperties("src/main/resources/AppConfig.properties");
-            MusicApp app = new MusicApp(config);
-            app.start();
-        } catch (IOException e) {
-            logger.error("Fehler beim Laden der Konfiguration", e);
+            if (master != null) {
+                master.stop();
+                master = null;
+            }
+            if (client != null) {
+                client.close();
+                client = null;
+            }
+            logger.info("MusicApp gestoppt.");
+        } catch (Exception e) {
+            logger.error("Fehler beim Stoppen der Anwendung", e);
+            e.printStackTrace();
         }
+    }
+
+    private void handleException(Exception e) {
+        logger.error("Eine unerwartete Ausnahme ist aufgetreten", e);
+    }
+
+    public static void main(String[] args) {
+        // Starte die JavaFX-Anwendung
+        launch(args);
     }
 }
