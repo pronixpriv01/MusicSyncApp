@@ -29,5 +29,5 @@
     <Label text="Connected Clients:"/>
     <ListView fx:id="clientListView" prefHeight="200" prefWidth="300"/>
 
-    <Button text="Back" onAction="#back" prefWidth="100"/>
+    <Button fx:id="backButton" text="Back" onAction="#back" prefWidth="100"/>
 </VBox>

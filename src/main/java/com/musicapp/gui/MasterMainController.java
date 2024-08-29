@@ -5,6 +5,10 @@ import com.musicapp.util.AppConfig;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
@@ -15,6 +19,7 @@ import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -35,6 +40,8 @@ public class MasterMainController {
     private Button startVisualizerButton; // Button zum Starten des Visualizers
     @FXML
     private Button stopVisualizerButton; // Button zum Stoppen des Visualizers
+    @FXML
+    private Button backButton;
     @FXML
     private ListView<String> clientListView; // ListView für verbundene Clients
 
@@ -190,5 +197,20 @@ public class MasterMainController {
     }
 
     public void back(ActionEvent actionEvent) {
+        try{
+            // FXML-Datei für die Main-Seite laden
+            Parent root = FXMLLoader.load(getClass().getResource("/start/start.fxml"));
+
+            // Aktuelles Stage-Objekt abrufen
+            Stage stage = (Stage) ((Node) actionEvent.getSource()).getScene().getWindow();
+
+            // Neue Szene erstellen und setzen
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace(); // Fehlerbehandlung, optional
+        }
+
     }
 }
