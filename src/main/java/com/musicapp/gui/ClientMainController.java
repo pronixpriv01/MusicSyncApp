@@ -1,10 +1,7 @@
 package com.musicapp.gui;
 
 import com.musicapp.util.AppConfig;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
@@ -25,21 +22,22 @@ public class ClientMainController {
     @FXML
     private Slider speedSlider;
     @FXML
-    private Button backButton; // Button zum Zurückkehren zur Rollenauswahl
+    private Button backButton;
 
     private static final Logger logger = LoggerFactory.getLogger(ClientMainController.class);
     private AppConfig appconfig;
+    private Main mainApp; // Reference to the Main class
 
     /**
      * Initialisiert die Controller-Klasse. Setzt die anfänglichen Konfigurationen und Einstellungen.
      */
     @FXML
     public void initialize() {
-        // Hier Initialisierungslogik hinzufügen, wenn erforderlich
-        statusLabel.setText("Client verbunden. Warten auf Anweisungen vom Master.");
-
-        // Zurück zur Rollenauswahl
-        backButton.setOnAction(e -> returnToRoleSelection());
+        if (statusLabel != null) {
+            statusLabel.setText("Client verbunden. Warten auf Anweisungen vom Master.");
+        } else {
+            logger.error("StatusLabel ist null. Überprüfen Sie das FXML-Layout.");
+        }
     }
 
     /**
@@ -52,32 +50,25 @@ public class ClientMainController {
     }
 
     /**
-     * Methode zum Zurückkehren zur Rollenauswahl.
+     * Setzt die Referenz auf die Main-Klasse.
+     *
+     * @param mainApp Die Instanz der Main-Klasse.
      */
-    private void returnToRoleSelection() {
-        // Implementiere die Logik für das Zurückkehren zur Rollenauswahl hier
-        logger.info("Zurück zur Rollenauswahl.");
+    public void setMainApp(Main mainApp) {
+        this.mainApp = mainApp;
     }
 
     /**
-     * Zeigt eine Alert-Meldung an.
-     *
-     * @param title   Titel des Alerts.
-     * @param message Nachricht des Alerts.
-     * @param type    Typ des Alerts (Information, Warnung, Fehler).
+     * Methode für die Rückkehraktion bei Klick auf den "Back"-Button.
      */
-    private void showAlert(String title, String message, AlertType type) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
-
-    public void back(ActionEvent actionEvent) {
-        // Logik für den "Zurück"-Button, um das aktuelle Fenster zu schließen
-        Stage stage = (Stage) backButton.getScene().getWindow();
-        stage.close();
-        // Optional: Zur Hauptnavigation oder anderen UI-Komponenten wechseln
+    @FXML
+    private void back() {
+        logger.info("Back button clicked!");
+        // Wechseln Sie zur Auswahl der Rollenansicht
+        if (mainApp != null) {
+            mainApp.showOnboardingUI();
+        } else {
+            logger.error("MainApp reference is null. Cannot return to the role selection.");
+        }
     }
 }

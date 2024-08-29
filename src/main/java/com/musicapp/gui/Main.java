@@ -38,7 +38,7 @@ public class Main extends Application {
     /**
      * Zeigt die Onboarding-GUI an, um die Benutzerrolle auszuwählen.
      */
-    private void showOnboardingUI() {
+    public void showOnboardingUI() { // Änderung: Zugriffsmodifikator auf 'public' setzen
         VBox vbox = new VBox(10);
         vbox.setStyle("-fx-padding: 20;");
 
@@ -70,30 +70,32 @@ public class Main extends Application {
     private void startMainWindow() {
         try {
             if (config.isMaster()) {
-                // Master-Fenster anzeigen
+                // تحميل واجهة Master
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/master/masterMain.fxml"));
                 Parent root = loader.load();
-                MasterMainController masterController = loader.getController();
-                masterController.setAppConfig(config); // Setzt die App-Konfiguration
 
-                // Visualizer für den Master mit Steuerungselementen aktivieren
-                Visualizer visualizer = new Visualizer();
-                visualizer.setControlsEnabled(true);
+                // الحصول على Controller الخاص بـMaster
+                MasterMainController masterController = loader.getController();
+
+                // تمرير مرجع Main إلى MasterMainController
+                masterController.setAppConfig(config);
+                masterController.setMainApp(this);  // تأكد من استدعاء هذه الطريقة
 
                 Scene scene = new Scene(root, 600, 400);
                 primaryStage.setScene(scene);
                 primaryStage.setTitle("Master Control");
                 primaryStage.show();
             } else {
-                // Client-Fenster anzeigen
+                // تحميل واجهة Client
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/clientMain.fxml"));
                 Parent root = loader.load();
-                ClientMainController clientController = loader.getController();
-                clientController.setAppConfig(config); // Setzt die App-Konfiguration
 
-                // Visualizer für den Client ohne Steuerungselemente aktivieren
-                Visualizer visualizer = new Visualizer();
-                visualizer.setControlsEnabled(false);
+                // الحصول على Controller الخاص بـClient
+                ClientMainController clientController = loader.getController();
+
+                // تمرير مرجع Main إلى ClientMainController
+                clientController.setAppConfig(config);
+                clientController.setMainApp(this);
 
                 Scene scene = new Scene(root, 600, 400);
                 primaryStage.setScene(scene);
@@ -101,10 +103,11 @@ public class Main extends Application {
                 primaryStage.show();
             }
         } catch (Exception e) {
-            logger.error("Fehler beim Starten des Hauptfensters", e);
-            showAlert("Fehler", "Fehler beim Starten des Hauptfensters. Details im Log.", AlertType.ERROR);
+            logger.error("Error starting main window", e);
+            showAlert("Error", "Failed to start the main window. See logs for details.", AlertType.ERROR);
         }
     }
+
 
     /**
      * Zeigt eine Alert-Meldung an.
@@ -122,6 +125,7 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
-        launch(args);  // Startet die JavaFX-Anwendung
+        launch(args);
     }
 }
+

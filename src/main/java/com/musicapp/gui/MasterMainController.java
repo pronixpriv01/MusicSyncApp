@@ -5,10 +5,6 @@ import com.musicapp.util.AppConfig;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
@@ -19,7 +15,6 @@ import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -35,53 +30,49 @@ public class MasterMainController {
     @FXML
     private Button connect;
     @FXML
-    private Button disconnectButton; // Button zum Beenden des Master-Servers und Zurückkehren zur Rollenauswahl
+    private Button disconnectButton;
     @FXML
-    private Button startVisualizerButton; // Button zum Starten des Visualizers
+    private Button startVisualizerButton;
     @FXML
-    private Button stopVisualizerButton; // Button zum Stoppen des Visualizers
+    private Button stopVisualizerButton;
     @FXML
-    private Button backButton;
-    @FXML
-    private ListView<String> clientListView; // ListView für verbundene Clients
+    private ListView<String> clientListView;
 
     private static final Logger logger = LoggerFactory.getLogger(MasterMainController.class);
     private AppConfig appconfig;
     private Master master;
     private Visualizer visualizer;
     private Stage visualizerStage;
+    private Main mainApp; // Reference to the Main class
 
-    /**
-     * Initialisiert die Controller-Klasse. Setzt die anfänglichen Konfigurationen und Einstellungen.
-     */
     @FXML
     public void initialize() {
-        appconfig = new AppConfig(); // Falls die AppConfig noch nicht gesetzt ist, eine Standardinstanz verwenden
+        appconfig = new AppConfig();
         setMaxConnections.setText(String.valueOf(appconfig.getMaxConnections()));
 
-        // Setze die Action für den disconnectButton
         disconnectButton.setOnAction(e -> stopMasterServer());
-
-        // Setze die Action für den startVisualizerButton
         startVisualizerButton.setOnAction(e -> startVisualizer());
-
-        // Setze die Action für den stopVisualizerButton
         stopVisualizerButton.setOnAction(e -> stopVisualizer());
     }
 
-    /**
-     * Setzt die App-Konfiguration.
-     *
-     * @param config Die AppConfig-Instanz.
-     */
     public void setAppConfig(AppConfig config) {
         this.appconfig = config;
-        setMaxConnections.setText(String.valueOf(appconfig.getMaxConnections())); // Aktualisiert das Textfeld mit der neuen Konfiguration
+        setMaxConnections.setText(String.valueOf(appconfig.getMaxConnections()));
     }
 
-    /**
-     * Startet den Master-Server und akzeptiert Verbindungen von Clients.
-     */
+    public void setMainApp(Main mainApp) {
+        this.mainApp = mainApp;
+    }
+
+    @FXML
+    private void back(ActionEvent event) {
+        if (mainApp != null) {
+            mainApp.showOnboardingUI();
+        } else {
+            logger.error("MainApp reference is null. Cannot return to the role selection.");
+        }
+    }
+
     @FXML
     public void connectToClients() {
         try {
@@ -91,7 +82,7 @@ public class MasterMainController {
             if (master == null) {
                 master = new Master(appconfig, appconfig.getPort());
                 master.start();
-                master.setController(this);  // Setzt diesen Controller als Empfänger von Statusaktualisierungen
+                master.setController(this);
                 logger.info("Master-Server gestartet und wartet auf Verbindungen...");
                 showAlert("Erfolg", "Master-Server erfolgreich gestartet.", AlertType.INFORMATION);
             } else {
@@ -106,14 +97,11 @@ public class MasterMainController {
         }
     }
 
-    /**
-     * Startet den Visualizer.
-     */
     @FXML
     private void startVisualizer() {
         if (visualizerStage == null || !visualizerStage.isShowing()) {
             visualizer = new Visualizer();
-            visualizer.setControlsEnabled(true); // Master hat volle Kontrolle
+            visualizer.setControlsEnabled(true);
             visualizerStage = new Stage();
             visualizer.setMainWindow(visualizerStage);
             visualizer.start(visualizerStage);
@@ -123,9 +111,6 @@ public class MasterMainController {
         }
     }
 
-    /**
-     * Stoppt den Visualizer.
-     */
     @FXML
     private void stopVisualizer() {
         if (visualizer != null && visualizerStage != null) {
@@ -140,19 +125,16 @@ public class MasterMainController {
         }
     }
 
-    /**
-     * Beendet den Master-Server und kehrt zur Rollenauswahl zurück.
-     */
     @FXML
     private void stopMasterServer() {
         if (master != null) {
             try {
-                stopVisualizer(); // Stoppe den Visualizer, bevor der Master gestoppt wird
+                stopVisualizer();
                 master.stop();
                 master = null;
                 logger.info("Master-Server gestoppt.");
                 showAlert("Info", "Master-Server wurde gestoppt.", AlertType.INFORMATION);
-                // Hier könnte die Logik zum Zurückkehren zur Rollenauswahl hinzugefügt werden
+                backToRoleSelection();
             } catch (Exception e) {
                 logger.error("Fehler beim Stoppen des Master-Servers: ", e);
                 showAlert("Fehler", "Fehler beim Stoppen des Master-Servers. Details im Log.", AlertType.ERROR);
@@ -162,18 +144,19 @@ public class MasterMainController {
         }
     }
 
-    /**
-     * Aktualisiert die Liste der verbundenen Clients in der GUI.
-     */
-    public void updateClientList(String clientStatus) {
-        Platform.runLater(() -> clientListView.getItems().add(clientStatus)); // Aktualisiert die ListView
+    @FXML
+    private void backToRoleSelection() {
+        if (mainApp != null) {
+            mainApp.showOnboardingUI();
+        } else {
+            logger.error("MainApp reference is null. Cannot return to the role selection.");
+        }
     }
 
-    /**
-     * Aktualisiert die komplette Lobby-Information in der GUI.
-     *
-     * @param clientStatuses Eine Liste der Client-Status-Informationen.
-     */
+    public void updateClientList(String clientStatus) {
+        Platform.runLater(() -> clientListView.getItems().add(clientStatus));
+    }
+
     public void updateLobbyList(List<String> clientStatuses) {
         Platform.runLater(() -> {
             clientListView.getItems().clear();
@@ -181,36 +164,11 @@ public class MasterMainController {
         });
     }
 
-    /**
-     * Zeigt eine Alert-Meldung an.
-     *
-     * @param title   Titel des Alerts.
-     * @param message Nachricht des Alerts.
-     * @param type    Typ des Alerts (Information, Warnung, Fehler).
-     */
     private void showAlert(String title, String message, AlertType type) {
         Alert alert = new Alert(type);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
-    }
-
-    public void back(ActionEvent actionEvent) {
-        try{
-            // FXML-Datei für die Main-Seite laden
-            Parent root = FXMLLoader.load(getClass().getResource("/start/start.fxml"));
-
-            // Aktuelles Stage-Objekt abrufen
-            Stage stage = (Stage) ((Node) actionEvent.getSource()).getScene().getWindow();
-
-            // Neue Szene erstellen und setzen
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.show();
-        } catch (IOException e) {
-            e.printStackTrace(); // Fehlerbehandlung, optional
-        }
-
     }
 }
