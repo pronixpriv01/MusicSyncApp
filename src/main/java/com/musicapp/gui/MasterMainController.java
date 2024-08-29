@@ -136,6 +136,7 @@ public class MasterMainController {
     /**
      * Beendet den Master-Server und kehrt zur Rollenauswahl zurück.
      */
+    @FXML
     private void stopMasterServer() {
         if (master != null) {
             try {

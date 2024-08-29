@@ -1,12 +1,14 @@
 package com.musicapp.gui;
 
 import com.musicapp.util.AppConfig;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
+import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,5 +72,12 @@ public class ClientMainController {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    public void back(ActionEvent actionEvent) {
+        // Logik für den "Zurück"-Button, um das aktuelle Fenster zu schließen
+        Stage stage = (Stage) backButton.getScene().getWindow();
+        stage.close();
+        // Optional: Zur Hauptnavigation oder anderen UI-Komponenten wechseln
     }
 }
