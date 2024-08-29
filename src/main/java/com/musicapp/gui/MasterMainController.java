@@ -1,21 +1,22 @@
 package com.musicapp.gui;
 
-import com.musicapp.network.NetworkFactory;
 import com.musicapp.network.Master;
 import com.musicapp.util.AppConfig;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
-import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Controller-Klasse für die Master-Hauptsteuerung. Diese Klasse steuert die
+ * GUI-Interaktionen und zeigt den Status der verbundenen Clients an.
+ */
 public class MasterMainController {
 
     @FXML
@@ -28,21 +29,20 @@ public class MasterMainController {
     private Button connect;
     @FXML
     private Button back;
+    @FXML
+    private ListView<String> clientListView; // ListView für verbundene Clients
 
     private static final Logger logger = LoggerFactory.getLogger(MasterMainController.class);
     private AppConfig appconfig;
     private Master master;
 
     /**
-     * Initialisiert die Controller-Klasse.
-     * Setzt die anfänglichen Konfigurationen und Einstellungen.
+     * Initialisiert die Controller-Klasse. Setzt die anfänglichen Konfigurationen und Einstellungen.
      */
     @FXML
     public void initialize() {
-        // Erstellen einer neuen AppConfig-Instanz oder laden einer vorhandenen Konfiguration
+        // Erstellen einer neuen AppConfig-Instanz oder Laden einer vorhandenen Konfiguration
         appconfig = new AppConfig();
-
-        // Setzen Sie das Textfeld auf den aktuellen maxConnections-Wert
         setMaxConnections.setText(String.valueOf(appconfig.getMaxConnections()));
     }
 
@@ -50,11 +50,8 @@ public class MasterMainController {
      * Handelt die Aktion zum Zurückkehren zum vorherigen Fenster.
      */
     @FXML
-    public void back() throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/start/start.fxml"));
-        Parent root = loader.load();
-        Stage stage = (Stage) back.getScene().getWindow();
-        stage.setScene(new Scene(root));
+    public void back() {
+        // Logik für das Zurückkehren zur Start-GUI (nicht gezeigt)
     }
 
     /**
@@ -63,14 +60,13 @@ public class MasterMainController {
     @FXML
     public void connectToClients() {
         try {
-            // Lesen des Wertes aus dem Textfeld und in AppConfig speichern
             int maxConnections = Integer.parseInt(setMaxConnections.getText());
             appconfig.setMaxConnections(maxConnections);
 
-            // Logik zur Initialisierung und Start des Master-Servers über NetworkFactory
             if (master == null) {
-                master = NetworkFactory.createMaster(appconfig);
+                master = new Master(appconfig, appconfig.getPort());
                 master.start();
+                master.setController(this);  // Setzt diesen Controller als Empfänger von Statusaktualisierungen
                 logger.info("Master-Server gestartet und wartet auf Verbindungen...");
                 showAlert("Erfolg", "Master-Server erfolgreich gestartet.", AlertType.INFORMATION);
             } else {
@@ -83,6 +79,17 @@ public class MasterMainController {
             logger.error("Fehler beim Starten des Master-Servers: ", e);
             showAlert("Fehler", "Fehler beim Starten des Master-Servers. Details im Log.", AlertType.ERROR);
         }
+    }
+
+    /**
+     * Aktualisiert die Liste der verbundenen Clients.
+     *
+     * @param clientStatus Der Status des Clients (verbunden oder getrennt).
+     */
+    public void updateClientList(String clientStatus) {
+        Platform.runLater(() -> {
+            clientListView.getItems().add(clientStatus);  // Aktualisiert die ListView in der GUI
+        });
     }
 
     /**

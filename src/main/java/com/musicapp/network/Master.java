@@ -1,6 +1,7 @@
 package com.musicapp.network;
 
 import com.musicapp.core.ManualThreadPoolManager;
+import com.musicapp.gui.MasterMainController;
 import com.musicapp.util.AppConfig;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
@@ -19,6 +20,13 @@ public class Master extends WebSocketServer {
     private static final Logger logger = LoggerFactory.getLogger(Master.class);
     private final Lobby lobby = new Lobby();
     private final ManualThreadPoolManager threadPool;
+    private boolean isPlaybackRunning = false;
+    private MasterMainController controller;
+
+    // Methode zum Setzen des Controllers
+    public void setController(MasterMainController controller) {
+        this.controller = controller;
+    }
 
     /**
      * Konstruktor zur Initialisierung des Master-Servers.
@@ -59,11 +67,7 @@ public class Master extends WebSocketServer {
             String status = message.split(" ")[1];
             updateClientStatus(conn, status);
         } else if (conn.equals(lobby.getMaster())) {
-            logger.info("Master sendet Befehl: {}", message);
-            if (message.equalsIgnoreCase("start")) {
-                startSynchronizedPlayback();
-            }
-            lobby.broadcast(message);
+            handleMasterCommand(message);
         }
     }
 
@@ -80,9 +84,11 @@ public class Master extends WebSocketServer {
     /**
      * Stoppt die Steuerungslogik und schließt die Netzwerkanbindung.
      */
-    public void stop() {
+    @Override
+    public void stop() throws InterruptedException {
         logger.info("Master wird gestoppt");
         stopHeartbeat();
+        super.stop();
     }
 
     /**
@@ -93,17 +99,75 @@ public class Master extends WebSocketServer {
      */
     private void updateClientStatus(WebSocket conn, String status) {
         String clientIdentifier = conn.getRemoteSocketAddress().toString();
+        lobby.updateClientStatus(conn, status);
         logger.info("Status für {} aktualisiert: {}", clientIdentifier, status);
-        // Logik zur Aktualisierung des Status in der GUI
+
+        if (controller != null) {
+            controller.updateClientList(clientIdentifier + " - " + status);
+        }
+    }
+
+    /**
+     * Handhabt die Befehle des Masters und führt die entsprechende Aktion aus.
+     *
+     * @param command Der Befehl, der vom Master empfangen wurde.
+     */
+    private void handleMasterCommand(String command) {
+        logger.info("Master sendet Befehl: {}", command);
+        switch (command.toLowerCase()) {
+            case "start":
+                startSynchronizedPlayback();
+                break;
+            case "stop":
+                stopPlayback();
+                break;
+            case "sync":
+                syncPlayback();
+                break;
+            default:
+                logger.warn("Unbekannter Befehl vom Master empfangen: {}", command);
+                break;
+        }
     }
 
     /**
      * Startet die synchronisierte Wiedergabe durch Senden eines Timestamps an alle Clients.
      */
     private void startSynchronizedPlayback() {
-        long startTime = Instant.now().plusMillis(5000).toEpochMilli(); // Startzeit in 5 Sekunden
-        logger.info("Synchronisierte Wiedergabe startet um Timestamp: {}", startTime);
-        lobby.broadcast("start_playback " + startTime);
+        if (!isPlaybackRunning) {
+            long startTime = Instant.now().plusMillis(5000).toEpochMilli(); // Startzeit in 5 Sekunden
+            logger.info("Synchronisierte Wiedergabe startet um Timestamp: {}", startTime);
+            lobby.broadcast("start_playback " + startTime);
+            isPlaybackRunning = true;
+        } else {
+            logger.info("Wiedergabe läuft bereits.");
+        }
+    }
+
+    /**
+     * Stoppt die synchronisierte Wiedergabe.
+     */
+    private void stopPlayback() {
+        if (isPlaybackRunning) {
+            logger.info("Synchronisierte Wiedergabe wird gestoppt.");
+            lobby.broadcast("stop_playback");
+            isPlaybackRunning = false;
+        } else {
+            logger.info("Keine laufende Wiedergabe zum Stoppen.");
+        }
+    }
+
+    /**
+     * Synchronisiert die Wiedergabe mit allen Clients.
+     */
+    private void syncPlayback() {
+        if (isPlaybackRunning) {
+            logger.info("Synchronisiere laufende Wiedergabe mit allen Clients.");
+            long syncTime = Instant.now().plusMillis(2000).toEpochMilli(); // Synchronisationszeit in 2 Sekunden
+            lobby.broadcast("sync_playback " + syncTime);
+        } else {
+            logger.info("Keine laufende Wiedergabe zum Synchronisieren.");
+        }
     }
 
     /**

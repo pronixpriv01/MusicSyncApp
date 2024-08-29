@@ -5,7 +5,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -15,6 +17,7 @@ public class Lobby {
 
     private static final Logger logger = LoggerFactory.getLogger(Lobby.class);
     private final Set<WebSocket> clients = Collections.synchronizedSet(new HashSet<>());
+    private final Map<WebSocket, String> clientStatuses = Collections.synchronizedMap(new HashMap<>());
     private WebSocket master;
 
     /**
@@ -28,6 +31,7 @@ public class Lobby {
             logger.info("Neuer Master festgelegt: {}", client.getRemoteSocketAddress());
         } else {
             clients.add(client);
+            clientStatuses.put(client, "CONNECTED");
             logger.info("Neuer Client hinzugefügt: {}", client.getRemoteSocketAddress());
         }
     }
@@ -43,6 +47,7 @@ public class Lobby {
             logger.info("Master entfernt. Neuer Master wird benötigt.");
         } else {
             clients.remove(client);
+            clientStatuses.remove(client);
             logger.info("Client entfernt: {}", client.getRemoteSocketAddress());
         }
     }
@@ -86,5 +91,25 @@ public class Lobby {
      */
     public boolean hasMaster() {
         return master != null;
+    }
+
+    /**
+     * Aktualisiert den Status eines bestimmten Clients.
+     *
+     * @param client Der WebSocket des Clients.
+     * @param status Der neue Status des Clients.
+     */
+    public void updateClientStatus(WebSocket client, String status) {
+        clientStatuses.put(client, status);
+        logger.info("Status von Client {} aktualisiert: {}", client.getRemoteSocketAddress(), status);
+    }
+
+    /**
+     * Gibt den Status aller Clients zurück.
+     *
+     * @return Eine Map, die WebSocket-Clients und ihren Status enthält.
+     */
+    public Map<WebSocket, String> getClientStatuses() {
+        return new HashMap<>(clientStatuses);
     }
 }
