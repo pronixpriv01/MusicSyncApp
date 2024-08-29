@@ -20,6 +20,7 @@ public class Client extends WebSocketClient {
     private long latency = 0;
     private long jitter = 0;
     private final ManualThreadPoolManager threadPool;
+    private final int BUFFER_THRESHOLD_MS = 50;  // Schwellenwert für den Puffer
 
     /**
      * Konstruktor zur Erstellung eines neuen Clients mit Serververbindung.
@@ -46,7 +47,7 @@ public class Client extends WebSocketClient {
         if (message.startsWith("start_playback")) {
             long startTime = Long.parseLong(message.split(" ")[1]);
             long currentTime = Instant.now().toEpochMilli();
-            long delay = startTime - currentTime - latency;
+            long delay = startTime - currentTime - latency - BUFFER_THRESHOLD_MS;
             logger.info("Starte Wiedergabe in {} Millisekunden", delay);
             schedulePlayback(delay);
         } else if (message.equals("heartbeat")) {
